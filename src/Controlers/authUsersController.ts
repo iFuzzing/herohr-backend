@@ -2,16 +2,22 @@ import { Request, Response } from "express"
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import {recruiters as recruitersModel} from "./../Models/recruiters"
+import {validationResult} from 'express-validator'
 
 export const userRecruiterSingup = async function userRecruiterSingup(req:Request, res:Response){
+	
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json({errors: validResult.array()})
+	}
 
-	// HAPPY PATH
 	const saltRounds = 8
 
 	const email = req.body.email
 	const password = await bcrypt.hash(req.body.password, saltRounds)
 	const firstname = req.body.firstname
 	const lastname = req.body.lastname
+		
 	const access_token_private:string = process.env.ACCESS_TOKEN_SECRET as string
 	const access_token = jwt.sign(
 	{
@@ -41,8 +47,6 @@ export const userRecruiterSingup = async function userRecruiterSingup(req:Reques
 		return res.status(500)
 	}
 
-	return res.json({'message':'success'})
+	return res.json({'success':'Nova conta criada'})
 
 }
-
-module.exports = {userRecruiterSingup}
