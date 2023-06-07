@@ -1,7 +1,9 @@
-import express from 'express'
-import {userRecruiterSingup} from './../Controlers/authUsersController'
+import express, {Request, Response} from 'express'
+import {userRecruiterSingup, userRecruiterLogin, userRecruiterLogout} from './../Controlers/authUsersController'
 import modeltest from './../Models/model.test'
-import validateUserRecruiterSingup from './../Middleware/Validates/validateUserRecruiterSingup'
+import {validateUserRecruiterLogin, validateUserRecruiterSingup} from './../Middleware/Validates/validateAuthUsers'
+import routeProtection from '../Middleware/Protections/routeProtection'
+import protectedRoute from '../Controlers/controller.test'
 const router = express.Router()
 
 router.get('/api/hello_world', async (req, res)=>{
@@ -17,6 +19,10 @@ router.get('/api/hello_world', async (req, res)=>{
 	res.json({'message':'Hello world!'})
 })
 
-router.post('/api/recruiter/singup',validateUserRecruiterSingup, userRecruiterSingup)
+router.post('/api/recruiter/singup', validateUserRecruiterSingup, userRecruiterSingup)
+router.post('/api/recruiter/login', validateUserRecruiterLogin, userRecruiterLogin)
+router.get('/api/recruiter/logout', userRecruiterLogout)
+router.get('/api/recruiter/auth', routeProtection, (req:Request, res:Response)=>{return res.sendStatus(200)})
+router.get('/api/protected', routeProtection, protectedRoute)
 
 export default router

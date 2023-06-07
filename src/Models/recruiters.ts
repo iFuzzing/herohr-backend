@@ -34,6 +34,3 @@ export const recruiters = mongoose.model('Recruiter', new mongoose.Schema({
 
 })
 )
-
-module.exports = {recruiters}
-

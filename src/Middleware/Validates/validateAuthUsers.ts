@@ -1,7 +1,7 @@
 import {body} from 'express-validator'
 import { isPassword, isUsername } from '../../Utils/utils'
 
-const validateUserRecruiterSingup = [
+export const validateUserRecruiterSingup = [
 	body('email').notEmpty().isEmail().isLength({max: 42}).escape().withMessage('Email inválido'),
 	body('password').notEmpty().isLength({min: 8, max: 32}).withMessage('Senha deve ter entre 8 a 32 caracteres').custom(async pass =>{
 		if(!isPassword(pass)){
@@ -20,4 +20,11 @@ const validateUserRecruiterSingup = [
 	})
 ]
 
-export default validateUserRecruiterSingup
+export const validateUserRecruiterLogin = [
+	body('email').notEmpty().isEmail().isLength({max: 42}).escape().withMessage('Email inválido'),
+	body('password').notEmpty().isLength({min: 8, max: 32}).withMessage('Senha deve ter entre 8 a 32 caracteres').custom(async pass=>{
+		if(!isPassword(pass)){
+			throw new Error('Senha inválida')
+		}
+	})
+]
