@@ -3,32 +3,32 @@ import mongoose from "mongoose"
 export const recruiters = mongoose.model('Recruiter', new mongoose.Schema({
 	email:{
 		type: String,
-		require: true
+		required: true
 	},
 	password:{
 		type: String,
-		require: true
+		required: true
 	},
 	firstname:{
 		type: String,
-		require: true
+		required: true
 	},
 	lastname:{
 		type: String,
-		require: true
+		required: true
 	},
 	access_token:{
 		type: String,
-		require: true
+		required: true
 	},
 	create_at:{
 		type: String,
-		require: false,
+		required: false,
 		default: Date.now()
 	},
 	last_access:{
 		type: String,
-		require: false,
+		required: false,
 		default: Date.now()
 	},
 

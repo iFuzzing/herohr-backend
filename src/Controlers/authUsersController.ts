@@ -3,9 +3,33 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 import {recruiters as recruitersModel} from "./../Models/recruiters"
 import {validationResult} from 'express-validator'
+import sanitize from 'mongo-sanitize'
 
 export async function userRecruiterSingup(req:Request, res:Response){
-	
+
+	const token = req.cookies?.jwt?req.cookies.jwt:null
+	let isTokenValid = false
+	if(token){
+		const access_token_private: string = process.env.ACCESS_TOKEN_SECRET as string
+		try {
+			const token_decoded:any = jwt.verify(token, access_token_private)
+			if(token_decoded){
+				const token_email = token_decoded?.email?token_decoded.email as string:''
+				const recruiter = await recruitersModel.findOne({email: token_email, access_token: token})	
+				if(recruiter){
+					isTokenValid = true
+				}	
+			}
+
+		} catch (error) {
+			
+		}	
+	}
+
+	if(isTokenValid){
+		return res.sendStatus(400)
+	}
+
 	const validResult = validationResult(req)
 	if(!validResult.isEmpty()){
 		return res.status(400).json({errors: validResult.array()})
@@ -13,14 +37,34 @@ export async function userRecruiterSingup(req:Request, res:Response){
 
 	const saltRounds = 8
 
-	const email = req.body.email
+	const email = sanitize(req.body.email)
 	const password = await bcrypt.hash(req.body.password, saltRounds)
-	const firstname = req.body.firstname
-	const lastname = req.body.lastname
-		
+	const firstname = sanitize(req.body.firstname)
+	const lastname = sanitize(req.body.lastname)
+			
+	const result = await recruitersModel.findOne({email: email})
+	if(result){
+		return res.status(409).json({'message':'email em uso'})
+	}	
+
+	let recruiter
+	try{
+		recruiter = await recruitersModel.create({
+			email: email,
+			password: password,
+			firstname: firstname,
+			lastname: lastname,
+			access_token: ' '
+		})
+	}catch(err){
+		console.log(err)
+		return res.sendStatus(500)
+	}
+
 	const access_token_private:string = process.env.ACCESS_TOKEN_SECRET as string
 	const access_token = jwt.sign(
 	{
+		'id': recruiter.id,
 		'email': email,
 		'firstname': firstname,
 		'lastname': lastname
@@ -28,38 +72,49 @@ export async function userRecruiterSingup(req:Request, res:Response){
 	access_token_private,
 	{expiresIn: '1d'}
 	)
-	
-	const result = await recruitersModel.findOne({email: email})
-	if(result){
-		return res.status(409).json({'message':'email em uso'})
-	}	
-	
-	try{
-		recruitersModel.create({
-			email: email,
-			password: password,
-			firstname: firstname,
-			lastname: lastname,
-			access_token: access_token
-		})
-	}catch(err){
-		console.log(err)
-		return res.sendStatus(500)
-	}
+
+	recruiter.access_token = access_token
+	await recruiter.save()
+
+	const oneday = 24 * 60 * 60 * 1000 
+	res.cookie('jwt',access_token, {httpOnly: true, maxAge: oneday})
 
 	return res.json({'success':'Nova conta criada'})
-
 }
 
 export async function userRecruiterLogin(req:Request, res:Response){
+	
+	const token = req.cookies?.jwt?req.cookies.jwt:null
+	let isTokenValid = false
+	if(token){
+		const access_token_private: string = process.env.ACCESS_TOKEN_SECRET as string
+		try {
+			const token_decoded:any = jwt.verify(token, access_token_private)
+			if(token_decoded){
+				const token_email = sanitize(token_decoded?.email?token_decoded.email as string:'')
+				const recruiter = await recruitersModel.findOne({email: token_email, access_token: token})	
+				if(recruiter){
+					isTokenValid = true
+				}	
+			}
+
+		} catch (error) {
+			
+		}	
+	}
+
+	if(isTokenValid){
+		return res.sendStatus(400)
+	}
+
 
 	const validResult = validationResult(req)
 	if(!validResult.isEmpty()){
 		return res.status(400).json({erros: validResult.array()})
 	}
 
-	const email = req.body.email
-	const password = req.body.password
+	const email = sanitize(req.body.email)
+	const password = sanitize(req.body.password)
 
 	const recruiter = await recruitersModel.findOne({email: email})
 	if(!recruiter){
@@ -67,7 +122,6 @@ export async function userRecruiterLogin(req:Request, res:Response){
 	}
 
 	const passwordMatch = await bcrypt.compare(password, recruiter?.password?recruiter.password:'')
-	console.log(passwordMatch)
 	if(!passwordMatch){
 		return res.json({'error':'Email ou senha incorreto'})
 	}
@@ -75,6 +129,7 @@ export async function userRecruiterLogin(req:Request, res:Response){
 	const access_token_private:string = process.env.ACCESS_TOKEN_SECRET as string
 	const access_token = jwt.sign(
 	{
+		'id': recruiter.id,
 		'email': recruiter.email,
 		'firstname': recruiter.firstname,
 		'lastname': recruiter.lastname
@@ -109,12 +164,13 @@ export async function userRecruiterLogout(req:Request, res:Response){
 				return res.sendStatus(400)
 			}
 
-			const recruiter = await recruitersModel.findOne({email: token_decoded.email, access_token: token})
+			const token_email = sanitize(token_decoded.email)
+			const recruiter = await recruitersModel.findOne({email: token_email, access_token: token})
 			if(!recruiter){
 				return res.sendStatus(400)
 			}
 
-			recruiter.access_token =  ''
+			recruiter.access_token =  ' '
 			await recruiter.save()
 			res.clearCookie('jwt')
 			return res.json({'success':'Logout realizado'})

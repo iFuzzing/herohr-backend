@@ -1,3 +1,9 @@
+import fs from 'fs'
+
+export function clearTempFile(file: string){
+	fs.unlink(file, ()=>{})
+}
+
 /* Créditos para fazlulkarimweb https://github.com/fazlulkarimweb/string-sanitizer */
 export const isEmail = (email: string)=>{
 	const regex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
