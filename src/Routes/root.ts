@@ -3,12 +3,14 @@ import multer from 'multer'
 import {storage} from './../Models/multerConfig'
 
 import {userRecruiterSingup, userRecruiterLogin, userRecruiterLogout} from './../Controlers/authUsersController'
-import {validateUserRecruiterLogin, validateUserRecruiterSingup} from './../Middleware/Validates/validateAuthUsers'
+import { newCompany, getCompanies, deleteCompany, editCompany, getCompany } from '../Controlers/companiesController'
+import { protectedRoute } from '../Controlers/controller.test'
+
 import routeProtection from '../Middleware/Protections/routeProtection'
 import imageUploadProtection from '../Middleware/Protections/imageUploadProtection'
-import { newCompany, getCompanies } from '../Controlers/companiesController'
+
 import { validateNewCompany } from '../Middleware/Validates/validateCompanies'
-import { protectedRoute } from '../Controlers/controller.test'
+import {validateUserRecruiterLogin, validateUserRecruiterSingup} from './../Middleware/Validates/validateAuthUsers'
 
 const upload = multer({storage: storage, limits: {fileSize: 1024*1000}}).single('image')
 const router = express.Router()
@@ -18,7 +20,7 @@ router.post('/api/recruiter/login', validateUserRecruiterLogin, userRecruiterLog
 router.get('/api/recruiter/logout', userRecruiterLogout)
 router.get('/api/recruiter/auth', routeProtection, (req:Request, res:Response)=>{return res.sendStatus(200)})
 
-router.post('/api/recruiter/companies/new',routeProtection, (req:Request, res:Response, next:any)=>{
+router.post('/api/recruiter/companies/new', routeProtection, (req:Request, res:Response, next:any)=>{
    upload(req, res, (err)=>{
       if(err instanceof multer.MulterError){
          return res.sendStatus(400)
@@ -26,8 +28,20 @@ router.post('/api/recruiter/companies/new',routeProtection, (req:Request, res:Re
       next()
    })
 },imageUploadProtection, validateNewCompany, newCompany)
+router.get('/api/recruiter/companies/delete', routeProtection, deleteCompany)
+router.post('/api/recruiter/companies/edit', routeProtection, (req:Request, res:Response, next:any)=>{
+   upload(req, res, (err)=>{
+      if(err instanceof multer.MulterError){
+         return res.sendStatus(400)
+      }
+      next()
+   })
 
-router.get('/api/recruiter/companies',routeProtection, getCompanies)
+}, imageUploadProtection, validateNewCompany, editCompany)
+
+router.get('/api/recruiter/companies', routeProtection, getCompanies)
+router.get('/api/recruiter/company', routeProtection, getCompany)
+
 
 router.get('/api/protected', routeProtection, protectedRoute) // Rota de teste
 

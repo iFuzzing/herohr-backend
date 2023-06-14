@@ -1,6 +1,6 @@
 import {body} from 'express-validator'
 
-const not_allowed_keywords:string[] = ['script','<img','src=','alert(','onError','\' ||']
+const not_allowed_keywords:string[] = ['<script','<img','src=','alert(','onError','\' ||']
 
 export const validateNewCompany = [
 	body('name').notEmpty().isLength({max: 42}).escape().withMessage('O nome da empresa deve ter no máximo 42 caracteres').custom(async(name: string)=>{

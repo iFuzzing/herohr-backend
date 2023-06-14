@@ -9,6 +9,7 @@ async function sharpProccess(file: string){
 		await sharp(file).toFile(file+'.png')
 	} catch (error) {
 		// TODO: salvar no logs de tentiva de ataque
+		console.log('>>>>>>Erro: ',error)
 		return false
 	}
 

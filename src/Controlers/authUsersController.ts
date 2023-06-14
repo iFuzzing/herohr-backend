@@ -41,7 +41,7 @@ export async function userRecruiterSingup(req:Request, res:Response){
 	const password = await bcrypt.hash(req.body.password, saltRounds)
 	const firstname = sanitize(req.body.firstname)
 	const lastname = sanitize(req.body.lastname)
-			
+
 	const result = await recruitersModel.findOne({email: email})
 	if(result){
 		return res.status(409).json({'message':'email em uso'})

@@ -16,5 +16,10 @@ export const companies =  mongoose.model('Companie',new mongoose.Schema({
 	picture:{
 		type: String,
 		required: true
+	},
+	created_at:{
+		type: Date,
+		required: false,
+		default: Date.now
 	}
 }))
