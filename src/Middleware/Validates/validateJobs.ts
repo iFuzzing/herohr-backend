@@ -1,8 +1,8 @@
 import {body} from 'express-validator'
 
-const not_allowed_keywords:string[] = ['<script','<img','src=','alert(','onerror','\' ||']
+const not_allowed_keywords:string[] = ['<script','<img','src=','alert(','onError','\' ||']
 
-export const validateNewCompany = [
+export const validateNewJob = [
 	body('name').notEmpty().isLength({max: 42}).withMessage('O nome da empresa deve ter no máximo 42 caracteres').custom(async(name: string)=>{
 		not_allowed_keywords.forEach(word=>{
 			if(name.toLowerCase().indexOf(word)!=-1){
