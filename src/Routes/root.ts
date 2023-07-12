@@ -6,6 +6,7 @@ import routeProtection from '../Middleware/Protections/routeProtection'
 import companiesRoute from './companies'
 import jobsRoute from './jobs'
 import stepsRoute from './steps'
+import applicantsRoute from './applicants'
 
 const router = express.Router()
 
@@ -17,6 +18,8 @@ router.get('/api/recruiter/auth', routeProtection, (req:Request, res:Response)=>
 router.use('/api/recruiter/companies', routeProtection, companiesRoute)
 router.use('/api/recruiter/jobs', routeProtection, jobsRoute)
 router.use('/api/recruiter/steps', routeProtection, stepsRoute)
+
+router.use('/api/applicant', applicantsRoute)
 
 router.get('/api/protected', routeProtection, protectedRoute) // Rota de teste
 
