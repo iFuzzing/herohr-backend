@@ -24,6 +24,14 @@ export const linking = mongoose.model('Linking',new mongoose.Schema({
 		type: String,
 		required: true
 	},
+	applicant_name:{
+		type: String,
+		required: true
+	},
+	applicant_pic:{
+		type: String,
+		required: true
+	},
 	status:{
 		type: String,
 		required: true

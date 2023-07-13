@@ -11,16 +11,18 @@ type tagsType = {
 	color: string
 }
 
-async function newLinking(recruiter: string, job: string, applicant: string, status: string, tags: tagsType[]){
+async function newLinking(recruiter: string, job: string, applicant: string, applicant_name: string, applicant_pic: string,  status: string, tags: tagsType[]){
 
 	try{
 		await linkingModel.create({
 			recruiter: recruiter,
 			job: job,
 			applicant: applicant,
+			applicant_name: applicant_name,
+			applicant_pic: applicant_pic,
 			status: status,
 			tags: tags,
-			step: 0
+			step: 1
 
 		})
 	}catch(err){
@@ -41,9 +43,42 @@ async function deleteLinking(recruiter: string, linking: string){
 	return true
 }
 
-export async function getApplicants(req: Request, res: Response){
+export async function getApplicantsLinking(req: Request, res: Response){
 
-	return res.json({'sucess':'ok'})
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}
+
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const step = sanitize(req.query.step) as string
+	const job = sanitize(req.query.job) as string
+
+	try {
+		const jobMatch = await jobsModel.findOne({recruiter: recruiter, _id: job})	
+		
+		if(!jobMatch){
+			return res.status(400).json({'error':'Trabalho inválido'})
+		}
+
+	} catch (err) {
+		console.log(err)
+		return res.status(500).json({'error':'Trabalho inválido'})
+	}
+
+	let linking
+	try {
+		if(step){
+			linking = await linkingModel.find({recruiter: recruiter, job: job, step: step})
+		}else{
+			linking = await linkingModel.find({recruiter: recruiter, job: job})
+		}
+
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+	return res.json(linking)
 }
 
 export async function deleteApplicantRef(recruiter: string, applicantref: string){
@@ -54,6 +89,32 @@ export async function deleteApplicantRef(recruiter: string, applicantref: string
 	}
 
 	return true
+}
+
+export async function getApplicantRef(req: Request, res: Response){
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const job = sanitize(req.query.job) as string
+	const applicantId = sanitize(req.query.id) as string
+
+	try {
+		const linked = await linkingModel.findOne({recruiter: recruiter, job: job, applicant: applicantId})
+		if(!linked){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+
+	let applicant
+	try {
+		applicant = await applicantsModel.findOne({_id: applicantId}).select('-recruiter')
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+	return res.json(applicant)
+
 }
 
 export async function newApplicantRef(req: Request, res: Response){
@@ -116,7 +177,7 @@ export async function newApplicantRef(req: Request, res: Response){
 		return res.status(500).json({'error':'Trabalho inválido'})
 	}
 
-	if(! await newLinking(recruiter, job, applicant._id.toString(), 'ativo', [])){
+	if(! await newLinking(recruiter, job, applicant._id.toString(), applicant.name, applicant.picture,  'ativo', [])){
 		clearTempFile(pic)
 		deleteApplicantRef(recruiter, applicant._id.toString())
 		return res.status(500).json({'error':'Trabalho inválido'})	

@@ -1,4 +1,4 @@
-import { body } from "express-validator"
+import { body, query } from "express-validator"
 import { isEmail, isUsername, validateGitHubProfile, validateLinkedInProfile, validatePhoneNumber } from "../../Utils/utils"
 
 type Skill = {
@@ -19,10 +19,6 @@ export const validateNewApplicantRef = [
 	body('job').notEmpty().isLength({min: 15, max: 24}).withMessage('Trabalho inválido').escape(),
 	body('name').notEmpty().isLength({max: 42}).withMessage('O nome deve ter no máximo 42 caracteres').custom(async(name: string)=>{
 	
-		if(!isUsername(name)){
-			throw new Error('Nome inválido')
-		}
-
 		not_allowed_keywords.forEach(word=>{
 			if(name.toLowerCase().indexOf(word)!=-1){
 				// Todo: registrar no log de possíveis ataques
@@ -124,3 +120,12 @@ export const validateNewApplicantRef = [
 
 	})
 ] 
+
+export const validateGetApplicantsRef = [
+	query('job').notEmpty().isLength({min: 15, max: 24}).withMessage('Trabalho inválido').escape()
+]
+
+export const validateGetApplicantRef = [
+	query('job').notEmpty().isLength({min: 15, max: 24}).withMessage('Trabalho inválido').escape(),
+	query('id').notEmpty().isLength({min: 15, max: 24}).withMessage('Candidato inválido').escape()
+]
