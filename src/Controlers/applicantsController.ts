@@ -5,6 +5,7 @@ import { applicants as applicantsModel } from '../Models/applicants'
 import { validationResult } from 'express-validator'
 import { linking as linkingModel } from '../Models/linking'
 import { jobs as jobsModel } from '../Models/jobs'
+import path from 'path'
 
 type tagsType = {
 	text: string,
@@ -81,14 +82,31 @@ export async function getApplicantsLinking(req: Request, res: Response){
 	return res.json(linking)
 }
 
-export async function deleteApplicantRef(recruiter: string, applicantref: string){
+async function delApplicantRef(recruiter: string, applicantref: string){
 	try {
+		const applicant = await applicantsModel.findOne({recruiter: recruiter, _id: applicantref})
+		if(!applicant){
+			return false
+		}
 		await applicantsModel.deleteOne({recruiter: recruiter,  _id: applicantref})
+		await linkingModel.deleteOne({recruiter: recruiter, applicant: applicantref})
+		clearTempFile(path.join(__dirname,'..','..','public','uploads', applicant.picture))
 	} catch (err) {
 		return false	
 	}
 
 	return true
+}
+
+export async function deleteApplicantRef(req: Request, res: Response){
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const applicant = sanitize(req.query.id) as string
+
+	if(!await delApplicantRef(recruiter, applicant)){
+		return res.sendStatus(400)
+	}
+
+	return res.json({'success':'Candidato deletado'})
 }
 
 export async function getApplicantRef(req: Request, res: Response){
@@ -132,6 +150,7 @@ export async function newApplicantRef(req: Request, res: Response){
 	const name = sanitize(req.body.name) as string
 	const aboutme = sanitize(req.body.aboutme) as string
 	const portfolio = sanitize(req.body.portfolio) as string
+	const job = sanitize(req.body.job) as string
 	
 	let contact
 	let skills
@@ -161,27 +180,97 @@ export async function newApplicantRef(req: Request, res: Response){
 		return res.sendStatus(500)
 	}
 
-	const job = sanitize(req.body.job) as string
 	try {
 		const jobMatch = await jobsModel.findOne({recruiter: recruiter, _id: job})	
 		
 		if(!jobMatch){
 			clearTempFile(pic)
-			deleteApplicantRef(recruiter, applicant._id.toString())
+			delApplicantRef(recruiter, applicant._id.toString())
 			return res.status(400).json({'error':'Trabalho inválido'})
 		}
 
 	} catch (err) {
 		clearTempFile(pic)
-		deleteApplicantRef(recruiter, applicant._id.toString())
+		delApplicantRef(recruiter, applicant._id.toString())
 		return res.status(500).json({'error':'Trabalho inválido'})
 	}
 
 	if(! await newLinking(recruiter, job, applicant._id.toString(), applicant.name, applicant.picture,  'ativo', [])){
 		clearTempFile(pic)
-		deleteApplicantRef(recruiter, applicant._id.toString())
+		delApplicantRef(recruiter, applicant._id.toString())
 		return res.status(500).json({'error':'Trabalho inválido'})	
 	}
 
 	return res.json({'success':'Novo candidato criado'})	
 }
+
+export async function editApplicantRef(req: Request, res: Response){
+
+	const pic: string = req?.file?.path.replace('temp_uploads','uploads') + '.png' as string
+	const pic_name: string = req?.file?.filename + '.png' as string
+
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		clearTempFile(pic)
+		console.log(validResult.array())
+		return res.status(400).json({erros: validResult.array()})
+	}
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const name = sanitize(req.body.name) as string
+	const aboutme = sanitize(req.body.aboutme) as string
+	const portfolio = sanitize(req.body.portfolio) as string
+	const applicantId = sanitize(req.body.applicant) as string
+
+	let contact
+	let skills
+	try{
+		contact = JSON.parse(sanitize(req.body.contact))
+		skills = JSON.parse(sanitize(req.body.skills))
+	}catch(err){
+		clearTempFile(pic)
+		return res.sendStatus(400)
+	}
+
+	let applicant
+	try {
+		applicant = await applicantsModel.findOne({_id: applicantId, recruiter: recruiter})
+		if(!applicant){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+	
+	try {
+		applicant.name = name
+		applicant.aboutme = aboutme
+		applicant.portfolio = portfolio
+		applicant.skills = skills
+		applicant.contact = contact
+		applicant.picture = pic_name
+		applicant.save()
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+	let link
+	try {
+		link = await linkingModel.findOne({applicant: applicant._id, recruiter: recruiter})
+	} catch (err) {
+		return res.sendStatus(500)	
+	}
+
+	try {
+		if(link!=null){
+			link.applicant_name = applicant.name
+			link.applicant_pic = applicant.picture
+			link.save()
+		}
+		
+	} catch (err) {
+		return res.sendStatus(500)		
+	}
+
+	return res.json({'success':'Candidato editado'})	
+}
+

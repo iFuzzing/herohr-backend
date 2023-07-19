@@ -129,3 +129,7 @@ export const validateGetApplicantRef = [
 	query('job').notEmpty().isLength({min: 15, max: 24}).withMessage('Trabalho inválido').escape(),
 	query('id').notEmpty().isLength({min: 15, max: 24}).withMessage('Candidato inválido').escape()
 ]
+
+export const validateDeleteApplicantRef = [
+	query('id').notEmpty().isLength({min: 15, max: 24}).withMessage('Candidato inválido').escape()
+]
