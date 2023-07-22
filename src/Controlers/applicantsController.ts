@@ -6,6 +6,7 @@ import { validationResult } from 'express-validator'
 import { linking as linkingModel } from '../Models/linking'
 import { jobs as jobsModel } from '../Models/jobs'
 import path from 'path'
+import {steps as stepsModel} from '../Models/steps'
 
 type tagsType = {
 	text: string,
@@ -99,6 +100,11 @@ async function delApplicantRef(recruiter: string, applicantref: string){
 }
 
 export async function deleteApplicantRef(req: Request, res: Response){
+
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}
 	const recruiter = sanitize(res.locals.recruiterid) as string
 	const applicant = sanitize(req.query.id) as string
 
@@ -107,6 +113,98 @@ export async function deleteApplicantRef(req: Request, res: Response){
 	}
 
 	return res.json({'success':'Candidato deletado'})
+}
+
+export async function nextStepApplicant(req: Request, res: Response){
+	
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}
+
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const applicant = sanitize(req.query.applicant) as string
+	const job = sanitize(req.query.job) as string 
+
+	let step
+	try {
+		step = await  stepsModel.find({recruiter: recruiter, job: job})
+		if(!step){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+	let link
+	try {
+		link = await linkingModel.findOne({recruiter: recruiter, applicant: applicant})		
+		if(!link){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+
+	try {
+		if(link.step == step.length){
+			return res.status(400).json({'error':'Esse candidato já está na última etapa'})
+		}
+
+		link.step = link.step + 1	
+		link.save()
+	} catch (err) {
+		return res.sendStatus(500) 	
+	}
+
+	return res.json({'success':'O candidato avançou uma etapa'})
+}
+
+export async function prevStepApplicant(req: Request, res: Response){
+	
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}
+
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const applicant = sanitize(req.query.applicant) as string
+	const job = sanitize(req.query.job) as string 
+
+	let step
+	try {
+		step = await  stepsModel.find({recruiter: recruiter, job: job})
+		if(!step){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+	let link
+	try {
+		link = await linkingModel.findOne({recruiter: recruiter, applicant: applicant})		
+		if(!link){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)
+	}
+
+
+	try {
+		if(link.step <= 0){
+			return res.status(400).json({'error':'Esse candidato já está na primeira etapa'})
+		}
+
+		link.step = link.step - 1	
+		link.save()
+	} catch (err) {
+		return res.sendStatus(500) 	
+	}
+
+	return res.json({'success':'O candidato voltou uma etapa'})
 }
 
 export async function getApplicantRef(req: Request, res: Response){

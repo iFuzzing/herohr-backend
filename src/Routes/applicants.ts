@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
-import { validateDeleteApplicantRef, validateGetApplicantRef, validateGetApplicantsRef, validateNewApplicantRef } from '../Middleware/Validates/validateApplicants'
+import { validateChangeStepApplicant, validateDeleteApplicantRef, validateGetApplicantRef, validateGetApplicantsRef, validateNewApplicantRef } from '../Middleware/Validates/validateApplicants'
 import routeProtection from '../Middleware/Protections/routeProtection'
-import { deleteApplicantRef, editApplicantRef, getApplicantRef, getApplicantsLinking, newApplicantRef } from '../Controlers/applicantsController'
+import { deleteApplicantRef, editApplicantRef, getApplicantRef, getApplicantsLinking, newApplicantRef, nextStepApplicant, prevStepApplicant } from '../Controlers/applicantsController'
 import multer from 'multer'
 import imageUploadProtection from '../Middleware/Protections/imageUploadProtection'
 import {storage} from './../Models/multerConfig'
@@ -12,6 +12,8 @@ const upload = multer({storage: storage, limits: {fileSize: 1024*1000}}).single(
 router.get('/', routeProtection, validateGetApplicantRef, getApplicantRef)
 router.get('/linking', routeProtection, validateGetApplicantsRef, getApplicantsLinking)
 router.get('/delete/ref', routeProtection, validateDeleteApplicantRef, deleteApplicantRef)
+router.get('/nextstep', routeProtection, validateChangeStepApplicant, nextStepApplicant)
+router.get('/prevstep', routeProtection, validateChangeStepApplicant, prevStepApplicant)
 
 router.post('/new/ref',(req: Request, res: Response, next:any)=>{
    upload(req, res, (err:any)=>{
