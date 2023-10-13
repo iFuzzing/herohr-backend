@@ -76,7 +76,7 @@ export async function userRecruiterSingup(req:Request, res:Response){
 	await recruiter.save()
 
 	const oneday = 24 * 60 * 60 * 1000 
-	res.cookie('jwt',access_token, {httpOnly: true, maxAge: oneday})
+	res.cookie('jwt',access_token, {httpOnly: true, maxAge: oneday, sameSite: 'none', secure: true})
 
 	return res.json({'success':'Nova conta criada'})
 }
@@ -142,7 +142,7 @@ export async function userRecruiterLogin(req:Request, res:Response){
 	await recruiter.save()
 
 	const oneday = 24 * 60 * 60 * 1000 
-	res.cookie('jwt',access_token, {httpOnly: false, maxAge: oneday})
+	res.cookie('jwt',access_token, {httpOnly: false, maxAge: oneday, sameSite: "none", secure: true})
 
 	res.json({'success':'Usuário logado'})
 }

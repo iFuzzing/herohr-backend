@@ -1,4 +1,4 @@
 node_modules/
 .env
-public/temp_uploads/*
-public/uploads/*
+public/*/.*
+public/*/*

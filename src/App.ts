@@ -20,7 +20,10 @@ mongoose.connection.once('open', ()=>{
 app.use(cookieParser())
 app.use(express.urlencoded({extended: true}))
 app.use(express.json())
-app.use(cors({credentials: true, origin: ['http://192.168.1.54','http://localhost', 'http://127.0.0.1']}))
+
+const corsFrontEndURL = process.env.FRONTEND_URL
+
+app.use(cors({credentials: true, origin: [`${corsFrontEndURL}`,'http://192.168.1.54','http://localhost', 'http://127.0.0.1']}))
 app.use(handleRequestLogs)
 app.use("/uploads",express.static(path.join(__dirname,'..', 'public','uploads')))
 app.use('/', rootRouter)
