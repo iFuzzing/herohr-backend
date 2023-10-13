@@ -16,6 +16,7 @@ type ContactType = {
 const not_allowed_keywords:string[] = ['<script','<img','src=','alert(','onError','\' ||']
 
 export const validateNewApplicantRef = [
+	body('company_id').notEmpty().escape(),
 	body('job').notEmpty().isLength({min: 15, max: 24}).withMessage('Trabalho inválido').escape(),
 	body('name').notEmpty().isLength({max: 42}).withMessage('O nome deve ter no máximo 42 caracteres').custom(async(name: string)=>{
 	

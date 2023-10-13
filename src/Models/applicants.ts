@@ -35,6 +35,10 @@ export const applicants = mongoose.model('Applicant',new mongoose.Schema({
 		type: String,
 		required: false
 	},
+	company_id:{
+		type: String,
+		required: true
+	},
 	name:{
 		type: String,
 		required: true

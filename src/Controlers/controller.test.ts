@@ -7,6 +7,6 @@ export function protectedRoute(req:Request, res:Response){
 export function imageUpload(req:Request, res:Response){
 	const fileinfo = req?.file
 	const testmsg = req?.body?.testmsg
-	console.log('message: ',testmsg)
+	////console.log('message: ',testmsg)
 	return res.json(fileinfo)
 }

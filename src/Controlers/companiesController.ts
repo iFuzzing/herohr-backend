@@ -2,6 +2,10 @@ import {Request, Response} from 'express'
 import { validationResult } from 'express-validator'
 import { clearTempFile } from '../Utils/utils'
 import { companies as companiesModel } from '../Models/companies'
+import {jobs as jobsModel } from '../Models/jobs'
+import { steps as stepsModel } from '../Models/steps'
+import { applicants as applicantsModel } from '../Models/applicants'
+import { linking as linkingModel } from '../Models/linking'
 import sanitize from 'mongo-sanitize'
 import path from 'path'
 
@@ -86,6 +90,7 @@ export async function getCompany(req:Request, res:Response){
 
 export async function deleteCompany(req:Request, res:Response){
 	const company_id: string = sanitize(req?.query.id as string) as string
+	const jobid: string = sanitize(req?.query.jobid as string) as string
 	if(!company_id || company_id.length > 24 || company_id.length < 15){
 		return res.sendStatus(400)
 	}
@@ -105,6 +110,10 @@ export async function deleteCompany(req:Request, res:Response){
 
 	try{
 		await companiesModel.deleteOne({recruiter: recruiter, _id: company_id})
+		await jobsModel.deleteMany({recruiter: recruiter, company: company_id})
+		await stepsModel.deleteMany({recruiter: recruiter, company: company_id})
+		await applicantsModel.deleteMany({recruiter: recruiter, company_id: company_id})
+		await linkingModel.deleteMany({recruiter: recruiter, company: company_id})
 	}catch(err){
 		return res.sendStatus(500)
 	}

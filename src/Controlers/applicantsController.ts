@@ -13,11 +13,12 @@ type tagsType = {
 	color: string
 }
 
-async function newLinking(recruiter: string, job: string, applicant: string, applicant_name: string, applicant_pic: string,  status: string, tags: tagsType[]){
+async function newLinking(recruiter: string, company: string, job: string, applicant: string, applicant_name: string, applicant_pic: string,  status: string, tags: tagsType[]){
 
 	try{
 		await linkingModel.create({
 			recruiter: recruiter,
+			company: company,
 			job: job,
 			applicant: applicant,
 			applicant_name: applicant_name,
@@ -194,7 +195,7 @@ export async function prevStepApplicant(req: Request, res: Response){
 
 
 	try {
-		if(link.step <= 0){
+		if(link.step <= 1){
 			return res.status(400).json({'error':'Esse candidato já está na primeira etapa'})
 		}
 
@@ -205,6 +206,102 @@ export async function prevStepApplicant(req: Request, res: Response){
 	}
 
 	return res.json({'success':'O candidato voltou uma etapa'})
+}
+
+export async function getTags(req: Request, res: Response){
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}
+	
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const applicant = sanitize(req.query.applicant) as string
+
+	let link
+	try {
+		link = await linkingModel.findOne({recruiter: recruiter, applicant: applicant})	
+	} catch (err) {
+		return res.sendStatus(500)	
+	}
+
+	return res.json(link?.tags)
+}
+
+export async function addtagApplicant(req: Request, res: Response){
+	const tag = sanitize(req.query.tag) as string
+	const color = sanitize(req.query.color) as string
+	const company = sanitize(req.query.company) as string
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const applicant = sanitize(req.query.applicant) as string
+
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}	
+
+	let link
+	try {
+		link = await linkingModel.findOne({recruiter: recruiter, applicant: applicant, company: company})	
+		if(!link){
+			return res.sendStatus(400)
+		}
+	} catch (err) {
+		return res.sendStatus(500)	
+	}
+	
+	if(link.tags.find((ctag)=> ctag.tag == tag) || link.tags.length >= 10){
+		return res.sendStatus(400)
+	}
+
+	try {	
+		link.tags.push({tag: tag, color: color})
+		link.save()	
+	} catch (err) {
+		return res.sendStatus(500)	
+	}
+
+	return res.json({"success":"Tag adicionada"})
+}
+
+export async function deltagApplicant(req: Request, res: Response){
+
+	const validResult = validationResult(req)
+	if(!validResult.isEmpty()){
+		return res.status(400).json(validResult.array())
+	}
+	
+	const recruiter = sanitize(res.locals.recruiterid) as string
+	const applicant = sanitize(req.query.applicant) as string
+	const company = sanitize(req.query.company) as string
+	const tag = sanitize(req.query.tag) as string
+
+	let link
+	try {
+		link = await linkingModel.findOne({recruiter: recruiter, applicant: applicant, company: company})
+		if(!link){
+			return res.sendStatus(400)
+		}	
+	} catch (err) {
+		return res.sendStatus(500)	
+	}
+
+	try {
+		let tagindex = -1
+		link.tags.forEach((ctag, index) => {
+				if(ctag.tag == tag)
+					tagindex = index
+		})
+
+		if(tagindex == -1){
+			return res.sendStatus(400)
+		}
+		
+		link.tags.splice(tagindex, 1)
+		link.save()
+	}catch (err) {
+		return res.sendStatus(500)	
+	}
+	return res.json({'success':'Tag removida'})
 }
 
 export async function getApplicantRef(req: Request, res: Response){
@@ -241,10 +338,10 @@ export async function newApplicantRef(req: Request, res: Response){
 	const validResult = validationResult(req)
 	if(!validResult.isEmpty()){
 		clearTempFile(pic)
-		console.log(validResult.array())
 		return res.status(400).json({erros: validResult.array()})
 	}
 	const recruiter = sanitize(res.locals.recruiterid) as string
+	const company_id = sanitize(req.body.company_id) as string
 	const name = sanitize(req.body.name) as string
 	const aboutme = sanitize(req.body.aboutme) as string
 	const portfolio = sanitize(req.body.portfolio) as string
@@ -265,6 +362,7 @@ export async function newApplicantRef(req: Request, res: Response){
 		applicant = await applicantsModel.create(
 			{
 				recruiter: recruiter,
+				company_id: company_id,
 				name: name,
 				aboutme: aboutme,
 				portfolio: portfolio,
@@ -293,7 +391,7 @@ export async function newApplicantRef(req: Request, res: Response){
 		return res.status(500).json({'error':'Trabalho inválido'})
 	}
 
-	if(! await newLinking(recruiter, job, applicant._id.toString(), applicant.name, applicant.picture,  'ativo', [])){
+	if(! await newLinking(recruiter, company_id, job, applicant._id.toString(), applicant.name, applicant.picture,  'ativo', [])){
 		clearTempFile(pic)
 		delApplicantRef(recruiter, applicant._id.toString())
 		return res.status(500).json({'error':'Trabalho inválido'})	
@@ -310,7 +408,6 @@ export async function editApplicantRef(req: Request, res: Response){
 	const validResult = validationResult(req)
 	if(!validResult.isEmpty()){
 		clearTempFile(pic)
-		console.log(validResult.array())
 		return res.status(400).json({erros: validResult.array()})
 	}
 	const recruiter = sanitize(res.locals.recruiterid) as string

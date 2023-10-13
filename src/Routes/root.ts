@@ -1,5 +1,5 @@
 import express, {Request, Response} from 'express'
-import {userRecruiterSingup, userRecruiterLogin, userRecruiterLogout} from './../Controlers/authUsersController'
+import {userRecruiterSingup, userRecruiterLogin, userRecruiterLogout, getRecruiterName} from './../Controlers/authUsersController'
 import { protectedRoute } from '../Controlers/controller.test'
 import {validateUserRecruiterLogin, validateUserRecruiterSingup} from './../Middleware/Validates/validateAuthUsers'
 import routeProtection from '../Middleware/Protections/routeProtection'
@@ -14,6 +14,7 @@ router.post('/api/recruiter/singup', validateUserRecruiterSingup, userRecruiterS
 router.post('/api/recruiter/login', validateUserRecruiterLogin, userRecruiterLogin)
 router.get('/api/recruiter/logout', userRecruiterLogout)
 router.get('/api/recruiter/auth', routeProtection, (req:Request, res:Response)=>{return res.sendStatus(200)})
+router.get('/api/recruiter/name', routeProtection, getRecruiterName)
 
 router.use('/api/recruiter/companies', routeProtection, companiesRoute)
 router.use('/api/recruiter/jobs', routeProtection, jobsRoute)
@@ -21,7 +22,8 @@ router.use('/api/recruiter/steps', routeProtection, stepsRoute)
 
 router.use('/api/applicant', applicantsRoute)
 
-router.get('/api/protected', routeProtection, protectedRoute) // Rota de teste
+//router.get('/api/protected', routeProtection, protectedRoute) // Rota de teste
+//router.get('/api/protected2', protectedRoute) // Rota de teste
 
 export default router
 

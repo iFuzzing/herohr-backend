@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express'
 import { validateChangeStepApplicant, validateDeleteApplicantRef, validateGetApplicantRef, validateGetApplicantsRef, validateNewApplicantRef } from '../Middleware/Validates/validateApplicants'
 import routeProtection from '../Middleware/Protections/routeProtection'
-import { deleteApplicantRef, editApplicantRef, getApplicantRef, getApplicantsLinking, newApplicantRef, nextStepApplicant, prevStepApplicant } from '../Controlers/applicantsController'
+import { addtagApplicant, deleteApplicantRef, deltagApplicant, editApplicantRef, getApplicantRef, getApplicantsLinking, getTags, newApplicantRef, nextStepApplicant, prevStepApplicant } from '../Controlers/applicantsController'
 import multer from 'multer'
 import imageUploadProtection from '../Middleware/Protections/imageUploadProtection'
 import {storage} from './../Models/multerConfig'
@@ -14,6 +14,9 @@ router.get('/linking', routeProtection, validateGetApplicantsRef, getApplicantsL
 router.get('/delete/ref', routeProtection, validateDeleteApplicantRef, deleteApplicantRef)
 router.get('/nextstep', routeProtection, validateChangeStepApplicant, nextStepApplicant)
 router.get('/prevstep', routeProtection, validateChangeStepApplicant, prevStepApplicant)
+router.get('/addtag', routeProtection, addtagApplicant) // TODO: validação
+router.get('/deltag', routeProtection, deltagApplicant) // TODO: validação
+router.get('/tags', routeProtection, getTags)
 
 router.post('/new/ref',(req: Request, res: Response, next:any)=>{
    upload(req, res, (err:any)=>{

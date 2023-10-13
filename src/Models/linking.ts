@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 
 const tags = new mongoose.Schema({
-	text:{
+	tag:{
 		type: String,
 		required: true
 	},
@@ -13,6 +13,10 @@ const tags = new mongoose.Schema({
 
 export const linking = mongoose.model('Linking',new mongoose.Schema({
 	recruiter:{
+		type: String,
+		required: true
+	},
+	company:{
 		type: String,
 		required: true
 	},

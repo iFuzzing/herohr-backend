@@ -57,7 +57,6 @@ export async function userRecruiterSingup(req:Request, res:Response){
 			access_token: ' '
 		})
 	}catch(err){
-		console.log(err)
 		return res.sendStatus(500)
 	}
 
@@ -99,7 +98,7 @@ export async function userRecruiterLogin(req:Request, res:Response){
 			}
 
 		} catch (error) {
-			
+			//console.log(error)	
 		}	
 	}
 
@@ -143,7 +142,7 @@ export async function userRecruiterLogin(req:Request, res:Response){
 	await recruiter.save()
 
 	const oneday = 24 * 60 * 60 * 1000 
-	res.cookie('jwt',access_token, {httpOnly: true, maxAge: oneday})
+	res.cookie('jwt',access_token, {httpOnly: false, maxAge: oneday})
 
 	res.json({'success':'Usuário logado'})
 }
@@ -177,3 +176,13 @@ export async function userRecruiterLogout(req:Request, res:Response){
 		}
 	)
 }
+
+export async function getRecruiterName(req: Request, res: Response){
+	const recruiterid = sanitize(res.locals.recruiterid)
+	const recruiter = await recruitersModel.findOne({_id: recruiterid})
+	if(!recruiter){
+		return res.sendStatus(400)
+	}
+
+	return res.json({'name': `${recruiter.firstname} ${recruiter.lastname}`})
+} 
